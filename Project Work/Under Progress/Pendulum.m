@@ -1,0 +1,123 @@
+function h = Pendulum(t_max, f_min, f_max, n_pendula)
+% h = pendulum_waves(t_max, f_min, f_max, f_min)
+% Animates n_pendula pendulawith frequence between f_min and f_max.
+
+
+%
+% h         : a structure containing the graphical objects handles.
+% t_max     : simulation duration (s).
+% f_min     : minimum frequency (Hz).
+% f_max     : maximum frequency (Hz).
+% n_pendula : number of pendula.
+%
+% Typical values:
+% t_max = 4.5*60;
+% f_min = 25/60;
+% f_max = 35/60;
+% n_pendula = 40;
+
+% Initializang video object:
+FILENAME = 'pendulum_wave';
+frame_rate = 60;
+
+ 
+vid = VideoWriter(FILENAME,'Uncompressed AVI');
+vid.FrameRate = frame_rate;
+open(vid);
+
+% Constants:
+W = 2*pi*linspace(f_min,f_max,n_pendula)'/frame_rate;
+L = 9.81./W.^2;
+THETA_0 = asin(-max(L)/4./L);                                              % arbitrary initial angle
+
+ 
+
+% Initial conditions:
+PHASE = zeros(n_pendula,1);
+X = L.*sin(THETA_0);
+Y = -L.*cos(THETA_0);
+
+% Initializing graphical objects:
+h.f = figure('Color', 'k', ...
+             'Position', [0 0 1280 720],  'InvertHardcopy', 'off', ...
+             'Visible', 'off'); % turn on to watch in "real time"
+
+h.a(1) = axes(h.f, 'Position', [0.1 0.0 0.5 1.0], ...
+                   'Color', 'k', ...
+                   'XColor', 'k', 'YColor', 'k', ...
+                   'NextPlot', 'add', ...
+                   'DataAspectRatioMode', 'manual', ...
+                   'DataAspectRatio', [1 1 1], ...
+                   'XLim', 1.1*[X(1), -X(1)], ...
+                   'YLim', [1.1*Y(1), 0.9*Y(end)]);
+h.a(2) = polaraxes(h.f, 'OuterPosition', [0.5 0.5 0.5 0.5], ...
+                        'Color', 'k', ...
+                        'ThetaColor', [0.6111 0.7205 0.7361], ...
+                        'RColor', [0.6111 0.7205 0.7361], ...
+                        'ThetaTickLabel', {}, ...
+                        'RTick', 0:0.2:1, ...
+                        'RTickLabel', {}, ...
+                        'ThetaZeroLocation', 'top', ...
+                        'NextPlot', 'add', ...
+                        'RLim', [0 1]);
+h.a(3) = polaraxes(h.f, 'OuterPosition', [0.5 0.0 0.5 0.5], ...
+                        'Color', 'k', ...
+                        'ThetaColor', [0.6111 0.7205 0.7361], ...
+                        'RColor', [0.6111 0.7205 0.7361], ...
+                        'ThetaTickLabel', {}, ...
+                        'RTick', flipud(L),'RTickLabel', {}, ...
+                        'ThetaZeroLocation', 'top', ...
+                        'NextPlot', 'add', ...
+                        'RLim', [0 max(L)]);
+
+h.p = gobjects(length(L),4);
+for i = 1:length(L)
+    h.p(i,1) = plot(h.a(1), [0; X(i)], [0; Y(i)], '-',...
+                            'Color', [0.4028 0.4340 0.5278]);
+    h.p(i,2) = plot(h.a(1), X(i), Y(i), 'o', ...
+                            'MarkerSize', 12, ...
+                            'Color', hsv2rgb([i/(1.5*length(L)) 1 1]), ...
+                            'MarkerFaceColor', hsv2rgb([i/(1.5*length(L)) 1 1]));
+    h.p(i,3) = plot(h.a(2), PHASE(i), 1, 'o', ...
+                            'Color', hsv2rgb([i/(1.5*length(L)) 1 1]), ...
+                            'MarkerFaceColor', hsv2rgb([i/(1.5*length(L)) 1 1]));
+    h.p(i,4) = plot(h.a(3), mod(PHASE(i),PHASE(1)), L(i), 'o', ...
+                            'Color', hsv2rgb([i/(1.5*length(L)) 1 1]), ...
+                            'MarkerFaceColor', hsv2rgb([i/(1.5*length(L)) 1 1]));
+end
+
+% Initializang video object:
+FILENAME = 'pendulum_wave';
+frame_rate = 60;
+vid =VideoWriter('newfile.avi','Motion JPEG AVI');
+%  VideoWriter(FILENAME,'Uncompressed AVI');
+vid.FrameRate = frame_rate;
+
+ 
+open(vid);
+
+% Simulation and video capture:
+for t = 0:t_max*frame_rate
+    PHASE = W*t;
+    THETA = THETA_0.*cos(PHASE);
+    X =  L.*sin(THETA);
+    Y = -L.*cos(THETA);
+    for i = 1:n_pendula
+        set(h.p(i,1),'XData', [0; X(i)], ...
+                     'YData', [0; Y(i)]);
+        set(h.p(i,2),'XData', X(i), ...
+                     'YData', Y(i));
+        set(h.p(i,3),'ThetaData', PHASE(i), ...
+                     'RData', 1);
+        set(h.p(i,4),'ThetaData', mod(PHASE(i),PHASE(1)),'RData', L(i));
+    end
+    drawnow;
+    FRAME = getframe(h.f);
+    writeVideo(vid,FRAME);
+end
+close(vid);
+close all;
+end
+
+
+
